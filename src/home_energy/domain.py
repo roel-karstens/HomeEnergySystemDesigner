@@ -35,3 +35,11 @@ class LossProfile:
             * (1.0 - self.soiling_loss)
             * (1.0 - self.temperature_loss_percent)
         )
+
+
+@dataclass(frozen=True, slots=True)
+class HeatPumpConfig:
+    enabled: bool
+    annual_heat_demand_kwh: float
+    seasonal_cop: float = 4.0
+    hot_water_included: bool = True
