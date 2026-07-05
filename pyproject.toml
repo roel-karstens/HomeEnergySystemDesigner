@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "home-energy-system-designer"
+version = "0.1.0"
+description = "Home energy system design tools"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = ["plotly>=6.0"]
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
