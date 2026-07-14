@@ -8,10 +8,15 @@ version = "0.1.0"
 description = "Home energy system design tools"
 readme = "README.md"
 requires-python = ">=3.11"
-dependencies = ["plotly>=6.0"]
-
-[tool.setuptools]
-package-dir = {"" = "src"}
+dependencies = [
+	"plotly>=6.0",
+	"fastapi>=0.116.0",
+	"uvicorn>=0.35.0",
+	"pydantic>=2.8.0",
+	"httpx2>=2.6.0",
+]
 
 [tool.setuptools.packages.find]
-where = ["src"]
+where = ["."]
+include = ["home_energy*"]
+exclude = ["deprecated*"]
