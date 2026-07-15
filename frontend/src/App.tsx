@@ -1,10 +1,12 @@
-import { useState } from "react";
+import { Suspense, lazy, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import { ChevronRight } from "lucide-react";
-import { LandingScreen } from "./screens/LandingScreen";
-import { InputScreen } from "./screens/InputScreen";
-import { LoadingScreen } from "./screens/LoadingScreen";
-import { ResultsScreen } from "./screens/ResultsScreen";
-import { AnalysisScreen } from "./screens/AnalysisScreen";
+
+const LandingScreen = lazy(() => import("./screens/LandingScreen").then((module) => ({ default: module.LandingScreen })));
+const InputScreen = lazy(() => import("./screens/InputScreen").then((module) => ({ default: module.InputScreen })));
+const LoadingScreen = lazy(() => import("./screens/LoadingScreen").then((module) => ({ default: module.LoadingScreen })));
+const ResultsScreen = lazy(() => import("./screens/ResultsScreen").then((module) => ({ default: module.ResultsScreen })));
+const AnalysisScreen = lazy(() => import("./screens/AnalysisScreen").then((module) => ({ default: module.AnalysisScreen })));
 
 type ScreenId = "landing" | "input" | "loading" | "results" | "analysis";
 
@@ -12,15 +14,11 @@ const screenOrder: ScreenId[] = ["landing", "input", "loading", "results", "anal
 
 export function App() {
   const [currentScreen, setCurrentScreen] = useState<ScreenId>("landing");
-  const [isTransitioning, setIsTransitioning] = useState(false);
 
   const currentIndex = screenOrder.indexOf(currentScreen);
 
-  const goToScreen = async (screenId: ScreenId) => {
-    setIsTransitioning(true);
-    await new Promise((resolve) => setTimeout(resolve, 200));
+  const goToScreen = (screenId: ScreenId) => {
     setCurrentScreen(screenId);
-    setIsTransitioning(false);
   };
 
   const handleNext = () => {
@@ -36,15 +34,25 @@ export function App() {
   };
 
   return (
-    <main className="min-h-screen w-full bg-white text-slate-900 overflow-hidden">
-      {/* Screen content with smooth fade transition */}
-      <div className={`transition-opacity duration-200 h-screen w-full ${isTransitioning ? "opacity-0" : "opacity-100"}`}>
-        {currentScreen === "landing" && <LandingScreen onNext={handleNext} />}
-        {currentScreen === "input" && <InputScreen onNext={handleNext} onPrev={handlePrev} />}
-        {currentScreen === "loading" && <LoadingScreen onNext={handleNext} />}
-        {currentScreen === "results" && <ResultsScreen onNext={handleNext} onPrev={handlePrev} />}
-        {currentScreen === "analysis" && <AnalysisScreen onPrev={handlePrev} />}
-      </div>
+    <main className="min-h-screen w-full overflow-hidden text-slate-900">
+      <Suspense fallback={<ScreenFallback />}>
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={currentScreen}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.22, ease: "easeOut" }}
+            className="h-screen w-full"
+          >
+            {currentScreen === "landing" && <LandingScreen onNext={handleNext} />}
+            {currentScreen === "input" && <InputScreen onNext={handleNext} onPrev={handlePrev} />}
+            {currentScreen === "loading" && <LoadingScreen onNext={handleNext} />}
+            {currentScreen === "results" && <ResultsScreen onNext={handleNext} onPrev={handlePrev} />}
+            {currentScreen === "analysis" && <AnalysisScreen onPrev={handlePrev} />}
+          </motion.div>
+        </AnimatePresence>
+      </Suspense>
 
       {/* Progress indicator & navigation - fixed bottom */}
       <div className="fixed bottom-6 left-4 right-4 z-50 flex items-center justify-between md:left-6 md:right-6">
@@ -73,5 +81,18 @@ export function App() {
         )}
       </div>
     </main>
+  );
+}
+
+function ScreenFallback() {
+  return (
+    <div className="grid h-screen w-full place-items-center bg-[#F8FAFC] px-4">
+      <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_4px_20px_-2px_rgba(0,0,0,0.03)]">
+        <div className="h-3 w-24 animate-pulse rounded bg-slate-200" />
+        <div className="mt-4 h-8 w-3/4 animate-pulse rounded bg-slate-200" />
+        <div className="mt-3 h-3 w-full animate-pulse rounded bg-slate-100" />
+        <div className="mt-2 h-3 w-5/6 animate-pulse rounded bg-slate-100" />
+      </div>
+    </div>
   );
 }
