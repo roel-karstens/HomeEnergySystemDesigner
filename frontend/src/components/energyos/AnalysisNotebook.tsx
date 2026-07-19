@@ -1,141 +1,256 @@
 import { useState } from "react";
-import { motion } from "framer-motion";
-import { Area, ComposedChart, Line, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import {
+  Area,
+  AreaChart,
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  Line,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
+import { PremiumCard } from "../ui/PremiumCard";
 
 const tabs = ["Energy balance", "Cash flow", "Sensitivity", "Assumptions", "Validation"] as const;
-
 type AnalysisTab = (typeof tabs)[number];
 
-type ChartPoint = {
-  time: string;
-  solar: number;
-  load: number;
-  heatPump: number;
-  ev: number;
-  gridImport: number;
-  gridExport: number;
-  price: number;
-};
-
-const data: ChartPoint[] = [
-  { time: "00:00", solar: 0, load: 2.8, heatPump: 1.5, ev: 0.2, gridImport: 2.1, gridExport: 0, price: 0.22 },
-  { time: "03:00", solar: 0, load: 2.4, heatPump: 1.4, ev: 0.1, gridImport: 1.9, gridExport: 0, price: 0.19 },
-  { time: "06:00", solar: 0.5, load: 2.6, heatPump: 1.2, ev: 0.3, gridImport: 1.2, gridExport: 0, price: 0.21 },
-  { time: "09:00", solar: 2.8, load: 3.1, heatPump: 0.8, ev: 0.4, gridImport: 0.5, gridExport: 0.2, price: 0.26 },
-  { time: "12:00", solar: 5.9, load: 3.4, heatPump: 0.6, ev: 0.5, gridImport: 0.1, gridExport: 2.4, price: 0.31 },
-  { time: "15:00", solar: 5.1, load: 3.6, heatPump: 0.7, ev: 0.8, gridImport: 0.2, gridExport: 1.3, price: 0.29 },
-  { time: "18:00", solar: 1.7, load: 4.4, heatPump: 1.2, ev: 1.4, gridImport: 2.1, gridExport: 0.1, price: 0.33 },
-  { time: "21:00", solar: 0.1, load: 4.1, heatPump: 1.8, ev: 1.2, gridImport: 3.2, gridExport: 0, price: 0.28 },
-  { time: "24:00", solar: 0, load: 3.3, heatPump: 1.6, ev: 0.6, gridImport: 2.7, gridExport: 0, price: 0.24 },
+const energyTrace = [
+  { time: "00:00", solar: 0, load: 2.8, price: 0.22, battery: 0.3 },
+  { time: "03:00", solar: 0, load: 2.4, price: 0.19, battery: 0.2 },
+  { time: "06:00", solar: 0.5, load: 2.6, price: 0.21, battery: 0.5 },
+  { time: "09:00", solar: 2.8, load: 3.1, price: 0.26, battery: 0.8 },
+  { time: "12:00", solar: 5.9, load: 3.4, price: 0.31, battery: 1.4 },
+  { time: "15:00", solar: 5.1, load: 3.6, price: 0.29, battery: 1.2 },
+  { time: "18:00", solar: 1.7, load: 4.4, price: 0.33, battery: 0.7 },
+  { time: "21:00", solar: 0.1, load: 4.1, price: 0.28, battery: 0.4 },
+  { time: "24:00", solar: 0, load: 3.3, price: 0.24, battery: 0.2 },
 ];
 
-const totals = [
+const cashFlowSeries = [
+  { year: "0", savings: 0, cumulative: -12480 },
+  { year: "1", savings: 1246, cumulative: -11234 },
+  { year: "5", savings: 1420, cumulative: -6200 },
+  { year: "10", savings: 1584, cumulative: 450 },
+  { year: "15", savings: 1710, cumulative: 8120 },
+  { year: "20", savings: 1860, cumulative: 18940 },
+];
+
+const sensitivitySeries = [
+  { parameter: "Import tariff +20%", impact: 2140 },
+  { parameter: "Battery cost -15%", impact: 980 },
+  { parameter: "Lower solar yield", impact: -1160 },
+  { parameter: "EV daytime charging", impact: 720 },
+  { parameter: "Heat demand +10%", impact: -860 },
+];
+
+const assumptionGroups = [
+  { title: "Weather and production", items: ["Reference weather year used for solar output.", "Panel degradation excluded from near-term ranking."] },
+  { title: "Usage behaviour", items: ["Daytime occupancy inferred from daytime load share.", "EV connection availability uses a weekly home-parking estimate."] },
+  { title: "Financial context", items: ["Export reimbursement treated as flat.", "Maintenance costs represented as a simplified annual reserve."] },
+];
+
+const validationLayers = [
+  { label: "Input validation", status: "Passed", note: "Required fields, numerical ranges and tariff bounds are consistent." },
+  { label: "Domain validation", status: "Passed", note: "Selected system freedoms are consistent with component states." },
+  { label: "Simulation validation", status: "Passed with assumptions", note: "Envelope still uses label-based heating approximation." },
+  { label: "Result validation", status: "Passed", note: "No negative-logic or infeasible recommendation states detected." },
+  { label: "Optimizer quality control", status: "Passed", note: "24 valid scenarios ranked against the chosen balanced objective." },
+];
+
+const energyTotals = [
   { label: "Total consumption", value: "6,308 kWh" },
   { label: "Solar production", value: "5,120 kWh" },
-  { label: "Self-consumption", value: "42%" },
   { label: "Grid import", value: "1,386 kWh" },
-  { label: "Grid export", value: "1,134 kWh" },
+  { label: "Peak import hour", value: "18:00" },
 ];
 
 export function AnalysisNotebook() {
   const [activeTab, setActiveTab] = useState<AnalysisTab>("Energy balance");
 
   return (
-    <section className="mx-auto w-full max-w-7xl rounded-3xl border border-slate-200 bg-white p-4 shadow-[0_4px_20px_-2px_rgba(0,0,0,0.03)] sm:p-6 lg:p-8">
-      <header className="mb-5">
-        <h2 className="text-3xl font-semibold tracking-tight text-slate-900">Advanced Analysis Notebook</h2>
-        <p className="mt-2 text-sm text-slate-500">High-resolution performance and financial traces for each optimization assumption.</p>
-      </header>
-
-      <div className="mb-6 flex gap-2 overflow-x-auto border-b border-slate-200 pb-3">
-        {tabs.map((tab) => {
-          const active = tab === activeTab;
-          return (
-            <button
-              key={tab}
-              type="button"
-              onClick={() => setActiveTab(tab)}
-              className={`whitespace-nowrap rounded-full px-3 py-1.5 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 ${
-                active
-                  ? "bg-[#00A86B] text-white"
-                  : "border border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
-              }`}
-            >
-              {tab}
-            </button>
-          );
-        })}
-      </div>
-
-      <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3 sm:p-4">
-        <div className="mb-3 flex flex-wrap gap-2">
-          {[
-            ["Solar", "#f59e0b"],
-            ["Load", "#0f172a"],
-            ["EV", "#3b82f6"],
-            ["Heat pump", "#0ea5e9"],
-            ["Grid import", "#ef4444"],
-            ["Grid export", "#22c55e"],
-            ["Price", "#111827"],
-          ].map(([label, color]) => (
-            <span
-              key={label}
-              className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs text-slate-600"
-            >
-              <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: color }} />
-              {label}
-            </span>
-          ))}
-        </div>
-
-        <div className="rounded-xl border border-slate-200 bg-white p-2 sm:p-4">
-          <div className="h-[300px] sm:h-[360px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <ComposedChart data={data}>
-                <XAxis dataKey="time" stroke="#64748b" tick={{ fontSize: 12 }} />
-                <YAxis yAxisId="energy" stroke="#64748b" tick={{ fontSize: 12 }} width={40} />
-                <YAxis yAxisId="price" orientation="right" stroke="#64748b" tick={{ fontSize: 12 }} width={42} />
-                <Tooltip
-                  contentStyle={{ border: "1px solid #E2E8F0", borderRadius: 12, background: "#fff" }}
-                  formatter={(value: number, name: string) => {
-                    if (name.includes("price")) {
-                      return [`EUR ${value.toFixed(2)}/kWh`, name];
-                    }
-                    return [`${value.toFixed(2)} kWh`, name];
-                  }}
-                  labelFormatter={(label) => `Time ${label}`}
-                />
-
-                <Area yAxisId="energy" type="monotone" dataKey="solar" stroke="#f59e0b" fill="#fde68a" fillOpacity={0.45} name="Solar production" />
-                <Line yAxisId="energy" type="monotone" dataKey="load" stroke="#0f172a" strokeWidth={2.4} dot={false} name="Household load" />
-                <Area yAxisId="energy" type="monotone" dataKey="ev" stackId="usage" stroke="#3b82f6" fill="#93c5fd" fillOpacity={0.33} name="EV charging" />
-                <Area yAxisId="energy" type="monotone" dataKey="heatPump" stackId="usage" stroke="#0ea5e9" fill="#bae6fd" fillOpacity={0.36} name="Heat pump" />
-                <Area yAxisId="energy" type="monotone" dataKey="gridImport" stroke="#ef4444" fill="#fecaca" fillOpacity={0.26} name="Grid import" />
-                <Area yAxisId="energy" type="monotone" dataKey="gridExport" stroke="#22c55e" fill="#bbf7d0" fillOpacity={0.26} name="Grid export" />
-                <Line yAxisId="price" type="monotone" dataKey="price" stroke="#111827" strokeWidth={1.4} dot={false} name="Dynamic price (EUR/kWh)" />
-              </ComposedChart>
-            </ResponsiveContainer>
+    <section className="mx-auto w-full max-w-[1600px] space-y-5">
+      <PremiumCard className="bg-[rgba(255,255,255,0.9)]">
+        <div className="flex flex-wrap items-start justify-between gap-5 border-b border-[rgba(148,163,184,0.18)] pb-6">
+          <div className="max-w-[720px]">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#94A3B8]">Engineering workspace</p>
+            <h2 className="mt-3 text-[32px] font-semibold tracking-[-0.03em] text-[#0F172A]">Advanced analysis notebook</h2>
+            <p className="mt-4 text-[15px] leading-8 text-[#64748B]">High-resolution traces, scenario economics and validation outputs for the recommended configuration.</p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {tabs.map((tab) => {
+              const active = tab === activeTab;
+              return (
+                <button
+                  key={tab}
+                  type="button"
+                  onClick={() => setActiveTab(tab)}
+                  className={[
+                    "rounded-full px-3 py-2 text-[12px] font-semibold transition-all duration-[200ms]",
+                    active
+                      ? "bg-[linear-gradient(180deg,#3F3F46_0%,#18181B_100%)] text-white shadow-[0_14px_24px_-18px_rgba(15,23,42,0.45)]"
+                      : "border border-[rgba(148,163,184,0.18)] bg-white text-[#64748B] hover:bg-[#F8FAFC]",
+                  ].join(" ")}
+                >
+                  {tab}
+                </button>
+              );
+            })}
           </div>
         </div>
-      </div>
 
-      <motion.div
-        initial="hidden"
-        animate="show"
-        variants={{ hidden: {}, show: { transition: { staggerChildren: 0.05 } } }}
-        className="mt-5 grid grid-cols-2 gap-2 sm:gap-3 lg:grid-cols-5"
-      >
-        {totals.map((item) => (
-          <motion.article
-            key={item.label}
-            variants={{ hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0 } }}
-            className="rounded-xl border border-slate-200 bg-white px-2.5 py-3 text-center sm:px-3"
-          >
-            <p className="text-[11px] uppercase tracking-wide text-slate-500 sm:text-xs">{item.label}</p>
-            <p className="mt-1 text-base font-semibold tracking-tight text-slate-900 sm:text-lg">{item.value}</p>
-          </motion.article>
-        ))}
-      </motion.div>
+        <div className="mt-6">{renderTab(activeTab)}</div>
+      </PremiumCard>
     </section>
+  );
+}
+
+function renderTab(activeTab: AnalysisTab) {
+  switch (activeTab) {
+    case "Energy balance":
+      return (
+        <div className="space-y-5">
+          <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
+            <div className="rounded-3xl border border-[rgba(148,163,184,0.18)] bg-[#F8FAFC] p-4 sm:p-5">
+              <div className="h-[320px] sm:h-[380px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={energyTrace}>
+                    <defs>
+                      <linearGradient id="nbSolar" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#10B981" stopOpacity={0.44} />
+                        <stop offset="100%" stopColor="#10B981" stopOpacity={0.06} />
+                      </linearGradient>
+                      <linearGradient id="nbBattery" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#8B5CF6" stopOpacity={0.36} />
+                        <stop offset="100%" stopColor="#8B5CF6" stopOpacity={0.05} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid vertical={false} stroke="rgba(148,163,184,0.18)" strokeDasharray="4 4" />
+                    <XAxis dataKey="time" tick={{ fontSize: 10, fill: "#94A3B8" }} axisLine={false} tickLine={false} />
+                    <YAxis yAxisId="energy" tick={{ fontSize: 10, fill: "#94A3B8" }} axisLine={false} tickLine={false} width={34} />
+                    <YAxis yAxisId="price" orientation="right" tick={{ fontSize: 10, fill: "#94A3B8" }} axisLine={false} tickLine={false} width={36} />
+                    <Tooltip contentStyle={{ background: "rgba(255,255,255,0.96)", border: "1px solid rgba(148,163,184,0.18)", borderRadius: 14, fontSize: 12 }} />
+                    <Area yAxisId="energy" type="monotone" dataKey="solar" stroke="#059669" fill="url(#nbSolar)" strokeWidth={2.1} />
+                    <Area yAxisId="energy" type="monotone" dataKey="battery" stroke="#7C3AED" fill="url(#nbBattery)" strokeWidth={2.1} />
+                    <Line yAxisId="energy" type="monotone" dataKey="load" stroke="#0EA5E9" strokeWidth={2.8} dot={false} />
+                    <Line yAxisId="price" type="monotone" dataKey="price" stroke="#4338CA" strokeDasharray="5 5" dot={false} />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+            <div className="grid gap-3">
+              {energyTotals.map((item) => (
+                <div key={item.label} className="rounded-2xl border border-[rgba(148,163,184,0.18)] bg-[#F8FAFC] px-4 py-4">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#94A3B8]">{item.label}</p>
+                  <p className="font-mono-num mt-3 text-[22px] font-semibold tracking-[-0.03em] text-[#0F172A]">{item.value}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      );
+    case "Cash flow":
+      return (
+        <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1fr)_340px]">
+          <div className="rounded-3xl border border-[rgba(148,163,184,0.18)] bg-[#F8FAFC] p-4 sm:p-5">
+            <div className="h-[320px] sm:h-[380px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={cashFlowSeries}>
+                  <defs>
+                    <linearGradient id="nbCashBarFill" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#8B5CF6" stopOpacity={0.92} />
+                      <stop offset="100%" stopColor="#2563EB" stopOpacity={0.66} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid vertical={false} stroke="rgba(148,163,184,0.18)" strokeDasharray="4 4" />
+                  <XAxis dataKey="year" tick={{ fontSize: 10, fill: "#94A3B8" }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fontSize: 10, fill: "#94A3B8" }} axisLine={false} tickLine={false} width={44} />
+                  <Tooltip contentStyle={{ background: "rgba(255,255,255,0.96)", border: "1px solid rgba(148,163,184,0.18)", borderRadius: 14, fontSize: 12 }} formatter={(value: number) => [`EUR ${value.toLocaleString()}`, "Value"]} />
+                  <Bar dataKey="cumulative" fill="url(#nbCashBarFill)" radius={[6, 6, 0, 0]} barSize={28} />
+                  <Line type="monotone" dataKey="savings" stroke="#10B981" strokeWidth={2.4} dot={false} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+          <div className="grid gap-3">
+            <CashStat label="Simple payback" value="5.6 years" note="balanced objective" />
+            <CashStat label="20-year ROI" value="186%" note="nominal cumulative view" />
+            <CashStat label="Export sensitivity" value="Moderate" note="battery value grows as export price falls" />
+          </div>
+        </div>
+      );
+    case "Sensitivity":
+      return (
+        <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
+          <div className="rounded-3xl border border-[rgba(148,163,184,0.18)] bg-[#F8FAFC] p-4 sm:p-5">
+            <div className="h-[320px] sm:h-[380px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={sensitivitySeries} layout="vertical" margin={{ left: 40 }}>
+                  <CartesianGrid horizontal={false} stroke="rgba(148,163,184,0.18)" strokeDasharray="4 4" />
+                  <XAxis type="number" tick={{ fontSize: 10, fill: "#94A3B8" }} axisLine={false} tickLine={false} />
+                  <YAxis dataKey="parameter" type="category" tick={{ fontSize: 10, fill: "#94A3B8" }} axisLine={false} tickLine={false} width={120} />
+                  <Tooltip contentStyle={{ background: "rgba(255,255,255,0.96)", border: "1px solid rgba(148,163,184,0.18)", borderRadius: 14, fontSize: 12 }} formatter={(value: number) => [`EUR ${value.toLocaleString()}`, "NPV delta"]} />
+                  <Bar dataKey="impact" radius={[0, 6, 6, 0]}>
+                    {sensitivitySeries.map((item) => (
+                      <Cell key={item.parameter} fill={item.impact >= 0 ? "#8B5CF6" : "#60A5FA"} fillOpacity={item.impact >= 0 ? 0.88 : 0.56} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+          <div className="space-y-3">
+            <InfoCard title="Highest upside" value="Import tariff increase" note="Storage and smart charging create more value under higher grid prices." />
+            <InfoCard title="Highest downside" value="Lower solar yield" note="Reduced generation weakens both self-consumption and export value." />
+            <InfoCard title="Risk framing" value="Manageable" note="Recommendation remains positive across all tested single-parameter shocks." />
+          </div>
+        </div>
+      );
+    case "Assumptions":
+      return (
+        <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
+          {assumptionGroups.map((group) => (
+            <PremiumCard key={group.title} title={group.title} subtitle="Declared modelling assumption">
+              <ul className="space-y-3 text-[14px] leading-7 text-[#64748B]">
+                {group.items.map((item) => (
+                  <li key={item} className="rounded-xl bg-[#F8FAFC] px-3 py-3 text-[#0F172A]">{item}</li>
+                ))}
+              </ul>
+            </PremiumCard>
+          ))}
+        </div>
+      );
+    case "Validation":
+      return (
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+          {validationLayers.map((layer) => (
+            <PremiumCard key={layer.label} title={layer.label} subtitle={layer.status} className="bg-[rgba(248,250,252,0.82)]">
+              <p className="text-[14px] leading-7 text-[#64748B]">{layer.note}</p>
+            </PremiumCard>
+          ))}
+        </div>
+      );
+  }
+}
+
+function CashStat({ label, value, note }: { label: string; value: string; note: string }) {
+  return (
+    <div className="rounded-2xl border border-[rgba(148,163,184,0.18)] bg-[#F8FAFC] px-4 py-4">
+      <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#94A3B8]">{label}</p>
+      <p className="font-mono-num mt-3 text-[22px] font-semibold tracking-[-0.03em] text-[#0F172A]">{value}</p>
+      <p className="mt-2 text-[13px] leading-6 text-[#64748B]">{note}</p>
+    </div>
+  );
+}
+
+function InfoCard({ title, value, note }: { title: string; value: string; note: string }) {
+  return (
+    <div className="rounded-2xl border border-[rgba(148,163,184,0.18)] bg-[#F8FAFC] px-4 py-4">
+      <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#94A3B8]">{title}</p>
+      <p className="mt-3 text-[18px] font-semibold tracking-[-0.02em] text-[#0F172A]">{value}</p>
+      <p className="mt-2 text-[13px] leading-6 text-[#64748B]">{note}</p>
+    </div>
   );
 }

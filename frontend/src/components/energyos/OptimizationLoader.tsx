@@ -1,109 +1,137 @@
-import { motion } from "framer-motion";
-import { CheckCircle2, LoaderCircle } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { PremiumCard } from "../ui/PremiumCard";
 
 interface OptimizationLoaderProps {
   onComplete: () => void;
 }
 
-const steps = [
-  "Modeling your energy usage",
-  "Simulating solar production",
-  "Evaluating battery strategies",
-  "Calculating financial outcomes...",
+const phases = [
+  {
+    key: "validation",
+    label: "Input validation",
+    detail: "Checking field completeness, constraint consistency and lock semantics.",
+    progressTarget: 18,
+  },
+  {
+    key: "simulation",
+    label: "Simulation baseline",
+    detail: "Generating hourly home, solar and thermal demand traces for the selected property context.",
+    progressTarget: 42,
+  },
+  {
+    key: "feasibility",
+    label: "Configuration sweep",
+    detail: "Testing allowed system combinations within user-defined fixed, optimize and excluded rules.",
+    progressTarget: 66,
+  },
+  {
+    key: "economics",
+    label: "Economic optimisation",
+    detail: "Ranking feasible scenarios against tariff context, investment bounds and objective weighting.",
+    progressTarget: 86,
+  },
+  {
+    key: "recommendation",
+    label: "Recommendation assembly",
+    detail: "Consolidating the best scenario, tradeoffs, assumptions and validation notes into one result set.",
+    progressTarget: 100,
+  },
 ];
 
 export function OptimizationLoader({ onComplete }: OptimizationLoaderProps) {
-  const [progress, setProgress] = useState(12);
+  const [phaseIndex, setPhaseIndex] = useState(0);
+  const [progress, setProgress] = useState(8);
 
   useEffect(() => {
+    const activePhase = phases[phaseIndex];
+    if (!activePhase) return undefined;
+
+    let phaseTimeout: number | undefined;
+
     const timer = setInterval(() => {
       setProgress((value) => {
-        if (value >= 78) {
+        const nextValue = Math.min(activePhase.progressTarget, value + (activePhase.progressTarget - value) * 0.18 + 1.2);
+
+        if (nextValue >= activePhase.progressTarget - 0.5) {
           clearInterval(timer);
-          return 78;
+          if (phaseIndex < phases.length - 1) {
+            phaseTimeout = window.setTimeout(() => setPhaseIndex((current) => current + 1), 360);
+          } else {
+            phaseTimeout = window.setTimeout(onComplete, 700);
+          }
+          return activePhase.progressTarget;
         }
-        return value + Math.random() * 7;
+
+        return nextValue;
       });
-    }, 380);
+    }, 220);
 
-    return () => clearInterval(timer);
-  }, []);
-
-  useEffect(() => {
-    if (progress >= 78) {
-      const timeout = setTimeout(onComplete, 1300);
-      return () => clearTimeout(timeout);
-    }
-    return undefined;
-  }, [onComplete, progress]);
+    return () => {
+      clearInterval(timer);
+      if (phaseTimeout !== undefined) {
+        window.clearTimeout(phaseTimeout);
+      }
+    };
+  }, [onComplete, phaseIndex]);
 
   const roundedProgress = Math.round(progress);
-  const activeIndex = Math.min(steps.length - 1, Math.floor((roundedProgress / 78) * steps.length));
-
-  const ringValue = useMemo(() => {
-    const clamped = Math.min(roundedProgress, 78);
-    return (clamped / 100) * 282.74;
-  }, [roundedProgress]);
+  const activePhase = phases[Math.min(phaseIndex, phases.length - 1)];
+  const completedCount = useMemo(() => phases.filter((phase) => roundedProgress >= phase.progressTarget).length, [roundedProgress]);
 
   return (
     <section className="grid min-h-[78vh] place-items-center px-4 py-10 sm:px-6">
-      <div className="w-full max-w-3xl rounded-3xl border border-slate-200 bg-white p-6 shadow-[0_20px_46px_-30px_rgba(15,23,42,0.35)] sm:p-8">
-        <h2 className="text-center text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">Optimizing your configuration</h2>
-        <p className="mt-2 text-center text-sm text-slate-500 sm:text-base">Please hold while we evaluate performance and financial outcomes.</p>
-
-        <div className="mt-8 grid gap-6 lg:grid-cols-[280px_1fr] lg:items-center">
-          <div className="relative mx-auto h-56 w-56">
-            <motion.div
-              animate={{ rotate: 360 }}
-              transition={{ duration: 4.2, repeat: Infinity, ease: "linear" }}
-              className="absolute inset-4 rounded-full bg-[conic-gradient(from_0deg,rgba(0,168,107,0.28),rgba(0,168,107,0.06),rgba(15,23,42,0.02),rgba(0,168,107,0.28))] blur-lg"
-            />
-
-            <svg className="relative h-full w-full" viewBox="0 0 100 100" role="img" aria-label="Analysis progress">
-              <circle cx="50" cy="50" r="45" fill="none" stroke="#e2e8f0" strokeWidth="4" />
-              <circle
-                cx="50"
-                cy="50"
-                r="45"
-                fill="none"
-                stroke="#00A86B"
-                strokeWidth="4"
-                strokeLinecap="round"
-                strokeDasharray={`${ringValue} 282.74`}
-                transform="rotate(-90 50 50)"
-                className="transition-all duration-300"
-              />
-            </svg>
-
-            <div className="absolute inset-0 grid place-items-center">
-              <div className="text-center">
-                <p className="text-5xl font-semibold tracking-tight text-slate-900">{Math.min(roundedProgress, 78)}%</p>
-                <p className="mt-1 text-xs font-medium uppercase tracking-[0.18em] text-slate-500">Computing</p>
+      <div className="w-full max-w-6xl space-y-6">
+        <PremiumCard className="bg-[rgba(255,255,255,0.9)]">
+          <div className="grid gap-6 lg:grid-cols-[320px_minmax(0,1fr)] lg:items-start">
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#94A3B8]">Engineering run</p>
+              <h2 className="mt-3 text-[34px] font-semibold tracking-[-0.03em] text-[#0F172A]">Running optimisation workflow.</h2>
+              <p className="mt-4 text-[15px] leading-7 text-[#64748B]">Results remain locked until validation, simulation and recommendation assembly complete.</p>
+              <div className="mt-6 rounded-2xl border border-[rgba(148,163,184,0.18)] bg-[#F8FAFC] p-4">
+                <div className="flex items-center justify-between text-[12px] text-[#64748B]">
+                  <span>Overall progress</span>
+                  <span className="font-mono-num text-[#0F172A]">{roundedProgress}%</span>
+                </div>
+                <div className="mt-3 h-2 overflow-hidden rounded-full bg-[#E2E8F0]">
+                  <div className="h-full rounded-full bg-[linear-gradient(90deg,#3F3F46_0%,#18181B_100%)] transition-all duration-300" style={{ width: `${roundedProgress}%` }} />
+                </div>
+                <div className="mt-4 grid grid-cols-2 gap-3 text-[12px] sm:grid-cols-3">
+                  <PhaseMetric label="Phases completed" value={`${completedCount}/${phases.length}`} />
+                  <PhaseMetric label="Scenario set" value="24" />
+                  <PhaseMetric label="Assumption checks" value="9" />
+                </div>
               </div>
             </div>
-          </div>
 
-          <ul className="space-y-3 rounded-2xl border border-slate-200 bg-slate-50 p-4">
-            {steps.map((step, idx) => {
-              const done = idx < activeIndex;
-              const active = idx === activeIndex;
-              return (
-                <li key={step} className="flex items-center gap-3 rounded-lg bg-white px-3 py-2.5 ring-1 ring-slate-100">
-                  {done ? (
-                    <CheckCircle2 className="h-5 w-5 shrink-0 text-[#00A86B]" />
-                  ) : active ? (
-                    <LoaderCircle className="h-5 w-5 shrink-0 animate-spin text-[#00A86B]" />
-                  ) : (
-                    <span className="h-5 w-5 shrink-0 rounded-full border-2 border-slate-300" />
-                  )}
-                  <span className={`text-sm ${done || active ? "font-medium text-slate-900" : "text-slate-500"}`}>{step}</span>
-                </li>
-              );
-            })}
-          </ul>
-        </div>
+            <div className="space-y-3">
+              {phases.map((phase, index) => {
+                const complete = roundedProgress >= phase.progressTarget;
+                const active = phase.key === activePhase.key;
+                return (
+                  <div key={phase.key} className={["rounded-2xl border px-4 py-4 transition-all duration-300", complete ? "border-[rgba(15,23,42,0.14)] bg-white" : active ? "border-[rgba(5,150,105,0.22)] bg-[rgba(248,250,252,0.92)]" : "border-[rgba(148,163,184,0.18)] bg-[rgba(248,250,252,0.72)]"].join(" ")}>
+                    <div className="flex items-center justify-between gap-4">
+                      <div>
+                        <p className="text-[14px] font-semibold text-[#0F172A]">{phase.label}</p>
+                        <p className="mt-1 text-[13px] leading-6 text-[#64748B]">{phase.detail}</p>
+                      </div>
+                      <span className="font-mono-num text-[12px] uppercase tracking-[0.08em] text-[#94A3B8]">{complete ? "done" : active ? "active" : "queued"}</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </PremiumCard>
       </div>
     </section>
+  );
+}
+
+function PhaseMetric({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-xl bg-white px-3 py-3 shadow-[0_8px_18px_-18px_rgba(15,23,42,0.2)]">
+      <p className="text-[10px] uppercase tracking-[0.08em] text-[#94A3B8]">{label}</p>
+      <p className="font-mono-num mt-2 text-[16px] font-semibold text-[#0F172A]">{value}</p>
+    </div>
   );
 }

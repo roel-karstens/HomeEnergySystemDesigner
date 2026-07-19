@@ -6,9 +6,9 @@ interface HeroSectionProps {
 }
 
 const heroMetrics = [
-  { value: "1", label: "home model" },
-  { value: "4", label: "systems simulated" },
-  { value: "82%", label: "confidence target" },
+  { value: "6", label: "intake stages" },
+  { value: "4", label: "system classes" },
+  { value: "3", label: "validation layers" },
 ];
 
 const scenarioCards = [

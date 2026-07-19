@@ -1,31 +1,20 @@
-import { useState } from "react";
 import {
-  BarChart,
+  Area,
+  AreaChart,
   Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip,
   XAxis,
   YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  Cell,
-  PieChart,
-  Pie,
 } from "recharts";
-import {
-  BarChart2,
-  ChevronLeft,
-  Download,
-  FileText,
-  LayoutDashboard,
-  Settings,
-  Share2,
-  TrendingUp,
-  Zap,
-} from "lucide-react";
-import { ConfidenceRing } from "../ui/ConfidenceRing";
+import { ChevronLeft, FileText, Share2 } from "lucide-react";
 import { EliteButton } from "../ui/EliteButton";
 import { PremiumCard } from "../ui/PremiumCard";
-import { SidebarNav } from "../ui/SidebarNav";
 
 interface DashboardOverviewProps {
   onOpenAnalysis: () => void;
@@ -33,335 +22,325 @@ interface DashboardOverviewProps {
 }
 
 type Kpi = {
-  title: string;
-  value: string;
-  hint: string;
-  badge?: string;
-  accent?: boolean;
-  suffix?: string;
-};
-
-type FlowSlice = {
   label: string;
-  value: number;
-  color: string;
+  value: string;
+  context: string;
 };
 
-type MonthSeries = {
-  month: string;
-  solar: number;
-  consumption: number;
+type SystemCard = {
+  label: string;
+  value: string;
+  detail: string;
 };
 
-const navItems = [
-  { key: "overview", label: "Overview", icon: LayoutDashboard },
-  { key: "energy", label: "Energy", icon: Zap },
-  { key: "financial", label: "Financial", icon: TrendingUp },
-  { key: "systems", label: "Systems", icon: BarChart2 },
-  { key: "settings", label: "Settings", icon: Settings },
+const headlineKpis: Kpi[] = [
+  { label: "Annual savings", value: "EUR 1,246", context: "versus current setup" },
+  { label: "Total investment", value: "EUR 12,480", context: "after incentives" },
+  { label: "Payback period", value: "5.6 years", context: "balanced objective" },
+  { label: "Self-consumption", value: "68%", context: "with battery optimisation" },
 ];
 
-const kpis: Kpi[] = [
-  { title: "Annual savings", value: "1,246", hint: "vs. current setup", accent: true },
-  { title: "Total investment", value: "12,480", hint: "After incentives" },
-  { title: "Payback period", value: "5.6", hint: "years", badge: "very good" },
-  { title: "20-year ROI", value: "186", hint: "%", suffix: "%" },
+const systemCards: SystemCard[] = [
+  { label: "Solar", value: "6.4 kWp", detail: "16 panels, south-west roof" },
+  { label: "Battery", value: "5 kWh", detail: "LFP storage sized for evening load-shift" },
+  { label: "Heat pump", value: "Hybrid", detail: "retains resilience while lowering peak grid demand" },
+  { label: "EV charging", value: "11 kW smart", detail: "solar-first daytime charging logic" },
 ];
 
-const flowSlices: FlowSlice[] = [
-  { label: "Self-consumption", value: 42, color: "#059669" },
-  { label: "Battery", value: 18, color: "#10B981" },
-  { label: "Grid import", value: 22, color: "#64748B" },
-  { label: "Grid export", value: 18, color: "#94A3B8" },
+const annualBalance = [
+  { month: "Jan", solar: 180, load: 310, battery: 48 },
+  { month: "Feb", solar: 240, load: 292, battery: 52 },
+  { month: "Mar", solar: 372, load: 260, battery: 64 },
+  { month: "Apr", solar: 492, load: 214, battery: 78 },
+  { month: "May", solar: 566, load: 205, battery: 82 },
+  { month: "Jun", solar: 610, load: 194, battery: 88 },
+  { month: "Jul", solar: 588, load: 201, battery: 85 },
+  { month: "Aug", solar: 534, load: 209, battery: 80 },
+  { month: "Sep", solar: 402, load: 236, battery: 69 },
+  { month: "Oct", solar: 284, load: 272, battery: 57 },
+  { month: "Nov", solar: 194, load: 301, battery: 49 },
+  { month: "Dec", solar: 152, load: 326, battery: 44 },
 ];
 
-const monthlyData: MonthSeries[] = [
-  { month: "Jan", solar: 180, consumption: 310 },
-  { month: "Feb", solar: 240, consumption: 290 },
-  { month: "Mar", solar: 370, consumption: 260 },
-  { month: "Apr", solar: 490, consumption: 210 },
-  { month: "May", solar: 560, consumption: 200 },
-  { month: "Jun", solar: 610, consumption: 190 },
-  { month: "Jul", solar: 590, consumption: 200 },
-  { month: "Aug", solar: 530, consumption: 205 },
-  { month: "Sep", solar: 400, consumption: 230 },
-  { month: "Oct", solar: 280, consumption: 270 },
-  { month: "Nov", solar: 190, consumption: 300 },
-  { month: "Dec", solar: 150, consumption: 325 },
+const cashFlow = [
+  { year: "0", cumulative: -12480 },
+  { year: "5", cumulative: -6200 },
+  { year: "10", cumulative: 450 },
+  { year: "15", cumulative: 8120 },
+  { year: "20", cumulative: 18940 },
 ];
 
-const dashboardDiagramImageSrc = `${import.meta.env.BASE_URL}images/dashboard-energy-flow-isometric.jpeg`;
+const energyFlows = [
+  { label: "Self-consumption", value: 42, color: "#0EA5E9" },
+  { label: "Battery dispatch", value: 18, color: "#8B5CF6" },
+  { label: "Grid import", value: 24, color: "#475569" },
+  { label: "Grid export", value: 16, color: "#10B981" },
+];
+
+const recommendationReasons = [
+  "Battery optimisation clears the midday export surplus without oversizing storage.",
+  "Hybrid heat pump keeps winter demand controllable while reducing annual gas exposure.",
+  "Smart EV charging absorbs excess production during the lowest-cost charging window.",
+];
+
+const validationNotes = {
+  blocking: "0 blockers",
+  warnings: [
+    "Envelope still uses label-based approximation.",
+    "Tariff model assumes a flat export reimbursement.",
+  ],
+  assumptions: [
+    "Weather year uses a standardised reference profile.",
+    "EV weekday charging availability is assumed at home during midday twice a week.",
+  ],
+};
+
+const scenarioSummary = [
+  { name: "Savings-first", metric: "EUR 1,380/yr", tradeoff: "higher battery utilisation" },
+  { name: "Balanced", metric: "5.6 yrs", tradeoff: "best payback / comfort ratio" },
+  { name: "Independence", metric: "72% autonomy", tradeoff: "higher capex" },
+];
 
 export function DashboardOverview({ onOpenAnalysis, onBack }: DashboardOverviewProps) {
-  const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [activeNav, setActiveNav] = useState("overview");
-
   return (
-    <div className="flex h-full flex-col overflow-hidden">
-      {/* Summary bar */}
-      <header
-        className="reveal relative z-40 flex shrink-0 items-center gap-5 px-6"
-        style={{
-          height: 84,
-          background: "linear-gradient(180deg, #3F3F46 0%, #18181B 100%)",
-          animationDelay: "70ms",
-        }}
-      >
-        {onBack && (
-          <button
-            type="button"
-            onClick={onBack}
-            className="flex items-center gap-1.5 rounded-lg px-2 py-1 text-[13px] text-[#A1A1AA] transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#059669]"
-          >
-            <ChevronLeft className="h-4 w-4" />
-            <span>Back</span>
-          </button>
-        )}
-
-        <div className="flex items-center gap-2">
-          <span className="h-2 w-2 animate-pulse rounded-full bg-[#10B981]" />
-          <span className="text-[11px] uppercase tracking-[0.07em] text-[#A1A1AA]">System optimised</span>
+    <div className="min-h-screen bg-[#F8FAFC] text-[#0F172A]">
+      <header className="sticky top-0 z-30 border-b border-white/8 bg-[linear-gradient(180deg,#3F3F46_0%,#18181B_100%)] px-5 py-5 text-white shadow-[0_18px_32px_-24px_rgba(15,23,42,0.6)] sm:px-8 lg:px-12">
+        <div className="mx-auto flex w-full max-w-[1600px] flex-wrap items-center gap-4">
+          {onBack && (
+            <button
+              type="button"
+              onClick={onBack}
+              className="inline-flex items-center gap-2 rounded-xl border border-white/12 bg-white/6 px-3 py-2 text-[13px] text-white/76 transition-colors hover:text-white"
+            >
+              <ChevronLeft className="h-4 w-4 text-[#10B981]" />
+              Back
+            </button>
+          )}
+          <div className="min-w-0 flex-1">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-white/55">
+              Recommendation ready
+            </p>
+            <h2 className="mt-2 text-[24px] font-semibold tracking-[-0.03em] text-white sm:text-[30px]">
+              Balanced whole-home recommendation
+            </h2>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <StatusChip label="Inputs validated" />
+            <StatusChip label="2 assumptions" />
+            <StatusChip label="24 scenarios tested" />
+          </div>
+          <div className="flex items-center gap-2">
+            <GhostAction icon={<Share2 className="h-4 w-4" />} label="Share" />
+            <GhostAction icon={<FileText className="h-4 w-4" />} label="Report" />
+            <EliteButton onClick={onOpenAnalysis}>Open advanced analysis</EliteButton>
+          </div>
         </div>
-
-        <div className="flex flex-col">
-          <span className="text-[11px] uppercase tracking-[0.05em] text-[#52525B]">Projected savings</span>
-          <span className="font-mono-num text-[22px] font-semibold leading-tight text-white">\u20ac 1,246</span>
-        </div>
-
-        <div className="hidden flex-col sm:flex">
-          <span className="text-[11px] uppercase tracking-[0.05em] text-[#52525B]">Grid dependence</span>
-          <span className="font-mono-num text-[15px] font-semibold leading-tight text-[#10B981]">\u221238%</span>
-        </div>
-
-        <div className="flex-1" />
-
-        <ConfidenceRing value={82} size={64} />
-
-        <EliteButton onClick={onOpenAnalysis}>Open analysis</EliteButton>
       </header>
 
-      {/* Body */}
-      <div className="flex flex-1 overflow-hidden">
-        <SidebarNav
-          items={navItems}
-          activeKey={activeNav}
-          onSelect={setActiveNav}
-          open={sidebarOpen}
-          onToggle={() => setSidebarOpen((v) => !v)}
-          heading="EnergyOS"
-        />
-
-        <main className="flex-1 overflow-y-auto bg-[#F8FAFC] p-5">
-          <div className="mx-auto max-w-6xl space-y-5">
-
-            <div
-              className="reveal flex flex-wrap items-center justify-between gap-3"
-              style={{ animationDelay: "140ms" }}
-            >
+      <main className="px-5 py-8 sm:px-8 lg:px-12 lg:py-10">
+        <div className="mx-auto flex w-full max-w-[1600px] flex-col gap-5">
+          <PremiumCard className="reveal" style={{ animationDelay: "0ms" }}>
+            <div className="grid gap-8 xl:grid-cols-[minmax(0,1.15fr)_0.85fr]">
               <div>
-                <h2 className="text-[22px] font-semibold tracking-tight text-[#0F172A]">
-                  System recommendation
-                </h2>
-                <p className="mt-0.5 text-[12px] text-[#64748B]">
-                  Integrated simulation across solar, battery, EV and heat pump.
+                <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#94A3B8]">
+                  Recommended package
                 </p>
+                <h3 className="mt-3 max-w-[18ch] text-balance text-[32px] font-semibold leading-tight tracking-[-0.03em] text-[#0F172A] sm:text-[40px]">
+                  Add a modest battery, keep the hybrid heat pump, and coordinate charging around solar.
+                </h3>
+                <p className="mt-5 max-w-[60ch] text-[15px] leading-8 text-[#64748B]">
+                  This configuration wins because it captures midday surplus, reduces peak import costs and avoids overspending on hardware that would sit idle through much of the year.
+                </p>
+                <div className="mt-6 grid gap-3 sm:grid-cols-3">
+                  <SummaryMetric label="Model completeness" value="High" detail="all core inputs present" />
+                  <SummaryMetric label="Constraint mode" value="Controlled" detail="optimizer respected explicit locks" />
+                  <SummaryMetric label="Decision objective" value="Balanced" detail="cost, autonomy and comfort weighted" />
+                </div>
               </div>
-              <div className="flex items-center gap-2">
-                <ActionIconButton icon={<Share2 className="h-4 w-4" />} label="Share" />
-                <ActionIconButton icon={<Download className="h-4 w-4" />} label="Export" />
-                <ActionIconButton icon={<FileText className="h-4 w-4" />} label="Report" />
-              </div>
-            </div>
 
-            {/* KPI row */}
-            <div className="grid grid-cols-2 gap-5 xl:grid-cols-4">
-              {kpis.map((kpi, i) => (
-                <PremiumCard
-                  key={kpi.title}
-                  as="article"
-                  className="reveal"
-                  style={{ animationDelay: `${210 + i * 70}ms` }}
-                >
-                  <p className="text-[11px] font-medium uppercase tracking-[0.05em] text-[#64748B]">
-                    {kpi.title}
-                  </p>
-                  <p
-                    className={`font-mono-num mt-3 text-[28px] font-semibold leading-none ${
-                      kpi.accent ? "text-[#059669]" : "text-[#0F172A]"
-                    }`}
+              <div className="grid gap-3">
+                {recommendationReasons.map((reason) => (
+                  <div
+                    key={reason}
+                    className="rounded-2xl border border-[rgba(148,163,184,0.18)] bg-[#F8FAFC] px-4 py-4 text-[14px] leading-7 text-[#0F172A]"
                   >
-                    {kpi.accent && (
-                      <span className="mr-0.5 text-[16px] font-normal text-[#94A3B8]">\u20ac </span>
-                    )}
-                    {kpi.value}
-                    {kpi.suffix && (
-                      <span className="ml-0.5 text-[16px] font-normal text-[#94A3B8]">{kpi.suffix}</span>
-                    )}
-                  </p>
-                  {kpi.badge ? (
-                    <div className="mt-3 inline-flex rounded-full border border-[rgba(5,150,105,0.2)] px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-[#059669]">
-                      {kpi.badge}
-                    </div>
-                  ) : !kpi.suffix ? (
-                    <p className="mt-3 text-[12px] text-[#64748B]">{kpi.hint}</p>
-                  ) : null}
-                </PremiumCard>
-              ))}
-            </div>
-
-            {/* Charts row */}
-            <div className="grid grid-cols-1 gap-5 xl:grid-cols-[1fr_1.3fr]">
-              <PremiumCard
-                title="Monthly energy balance"
-                subtitle="Solar production vs consumption (kWh)"
-                className="reveal"
-                style={{ animationDelay: "490ms" }}
-              >
-                <div className="h-[220px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={monthlyData} barSize={6} barGap={3}>
-                      <CartesianGrid
-                        vertical={false}
-                        stroke="rgba(148,163,184,0.18)"
-                        strokeDasharray="4 4"
-                      />
-                      <XAxis
-                        dataKey="month"
-                        tick={{ fontSize: 10, fill: "#94A3B8" }}
-                        axisLine={false}
-                        tickLine={false}
-                      />
-                      <YAxis
-                        tick={{ fontSize: 10, fill: "#94A3B8" }}
-                        axisLine={false}
-                        tickLine={false}
-                        width={32}
-                      />
-                      <Tooltip
-                        contentStyle={{
-                          background: "rgba(255,255,255,0.92)",
-                          border: "1px solid rgba(148,163,184,0.18)",
-                          borderRadius: 10,
-                          fontSize: 12,
-                        }}
-                        cursor={{ fill: "rgba(148,163,184,0.06)" }}
-                      />
-                      <Bar dataKey="solar" radius={[3, 3, 0, 0]} name="Solar">
-                        {monthlyData.map((_, idx) => (
-                          <Cell key={idx} fill="#059669" />
-                        ))}
-                      </Bar>
-                      <Bar dataKey="consumption" radius={[3, 3, 0, 0]} name="Consumption">
-                        {monthlyData.map((_, idx) => (
-                          <Cell key={idx} fill="#E2E8F0" />
-                        ))}
-                      </Bar>
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-                <div className="mt-3 flex items-center gap-4 text-[12px] text-[#64748B]">
-                  <LegendDot color="#059669" label="Solar production" />
-                  <LegendDot color="#E2E8F0" label="Consumption" />
-                </div>
-              </PremiumCard>
-
-              <PremiumCard
-                title="Annual energy flow"
-                className="reveal"
-                style={{ animationDelay: "560ms" }}
-              >
-                <div className="grid grid-cols-1 gap-5 sm:grid-cols-[1fr_160px]">
-                  <div className="space-y-2">
-                    {[
-                      { label: "16 Solar panels", detail: "6.4 kWp" },
-                      { label: "5 kWh Battery", detail: "LFP chemistry" },
-                      { label: "Smart EV charging", detail: "11 kW control" },
-                      { label: "Heat pump", detail: "Weather-compensated" },
-                    ].map((item) => (
-                      <div
-                        key={item.label}
-                        className="flex items-center justify-between rounded-xl border border-[rgba(148,163,184,0.18)] bg-[#F8FAFC] px-3 py-2 text-[12px]"
-                      >
-                        <span className="font-semibold text-[#0F172A]">{item.label}</span>
-                        <span className="text-[#64748B]">{item.detail}</span>
-                      </div>
-                    ))}
-
-                    <ul className="mt-3 space-y-1.5">
-                      {flowSlices.map((slice) => (
-                        <li key={slice.label} className="flex items-center justify-between text-[12px]">
-                          <span className="flex items-center gap-2 text-[#64748B]">
-                            <span className="h-2 w-2 rounded-full" style={{ background: slice.color }} />
-                            {slice.label}
-                          </span>
-                          <span className="font-mono-num font-semibold text-[#0F172A]">{slice.value}%</span>
-                        </li>
-                      ))}
-                    </ul>
+                    {reason}
                   </div>
-
-                  <div className="flex items-center justify-center">
-                    <div className="h-[160px] w-[160px]">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <PieChart>
-                          <Pie
-                            data={flowSlices}
-                            dataKey="value"
-                            nameKey="label"
-                            innerRadius={46}
-                            outerRadius={72}
-                            paddingAngle={2}
-                            strokeWidth={0}
-                          >
-                            {flowSlices.map((slice) => (
-                              <Cell key={slice.label} fill={slice.color} />
-                            ))}
-                          </Pie>
-                        </PieChart>
-                      </ResponsiveContainer>
-                    </div>
-                  </div>
-                </div>
-              </PremiumCard>
+                ))}
+              </div>
             </div>
+          </PremiumCard>
 
-            {/* System diagram */}
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
+            {headlineKpis.map((kpi, index) => (
+              <PremiumCard key={kpi.label} as="article" className="reveal" style={{ animationDelay: `${70 + index * 40}ms` }}>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#94A3B8]">{kpi.label}</p>
+                <p className="font-mono-num mt-4 text-[28px] font-semibold tracking-[-0.03em] text-[#0F172A]">{kpi.value}</p>
+                <p className="mt-3 text-[13px] leading-6 text-[#64748B]">{kpi.context}</p>
+              </PremiumCard>
+            ))}
+          </div>
+
+          <div className="grid grid-cols-1 gap-5 lg:grid-cols-2 xl:grid-cols-4">
+            {systemCards.map((item, index) => (
+              <PremiumCard key={item.label} className="reveal" style={{ animationDelay: `${210 + index * 40}ms` }}>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#94A3B8]">{item.label}</p>
+                <p className="font-mono-num mt-4 text-[24px] font-semibold tracking-[-0.03em] text-[#0F172A]">{item.value}</p>
+                <p className="mt-3 text-[13px] leading-6 text-[#64748B]">{item.detail}</p>
+              </PremiumCard>
+            ))}
+          </div>
+
+          <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1.2fr)_0.8fr]">
             <PremiumCard
-              title="System layout"
-              subtitle="Isometric energy flow diagram"
+              title="Monthly energy balance"
+              subtitle="Solar, household load and battery contribution"
               className="reveal"
-              style={{ animationDelay: "630ms" }}
-              rightSlot={
-                <span className="rounded-full border border-[rgba(5,150,105,0.2)] px-2 py-0.5 text-[11px] font-semibold text-[#059669]">
-                  Live model
-                </span>
-              }
+              style={{ animationDelay: "330ms" }}
             >
-              <div className="overflow-hidden rounded-xl border border-[rgba(148,163,184,0.18)] bg-[#F8FAFC]">
-                <img
-                  src={dashboardDiagramImageSrc}
-                  alt="Isometric home energy system flow diagram"
-                  className="max-h-[260px] w-full object-cover"
-                />
+              <div className="h-[280px] sm:h-[340px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={annualBalance}>
+                    <defs>
+                      <linearGradient id="solarFill" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#10B981" stopOpacity={0.42} />
+                        <stop offset="100%" stopColor="#10B981" stopOpacity={0.06} />
+                      </linearGradient>
+                      <linearGradient id="batteryFill" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#8B5CF6" stopOpacity={0.36} />
+                        <stop offset="100%" stopColor="#8B5CF6" stopOpacity={0.05} />
+                      </linearGradient>
+                      <linearGradient id="loadBarFill" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#0EA5E9" stopOpacity={0.72} />
+                        <stop offset="100%" stopColor="#0EA5E9" stopOpacity={0.28} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid vertical={false} stroke="rgba(148,163,184,0.18)" strokeDasharray="4 4" />
+                    <XAxis dataKey="month" tick={{ fontSize: 10, fill: "#94A3B8" }} axisLine={false} tickLine={false} />
+                    <YAxis tick={{ fontSize: 10, fill: "#94A3B8" }} axisLine={false} tickLine={false} width={34} />
+                    <Tooltip contentStyle={{ background: "rgba(255,255,255,0.96)", border: "1px solid rgba(148,163,184,0.18)", borderRadius: 14, fontSize: 12 }} />
+                    <Area type="monotone" dataKey="solar" stroke="#059669" fill="url(#solarFill)" strokeWidth={2.2} />
+                    <Area type="monotone" dataKey="battery" stroke="#7C3AED" fill="url(#batteryFill)" strokeWidth={2.1} />
+                    <Bar dataKey="load" fill="url(#loadBarFill)" radius={[4, 4, 0, 0]} barSize={12} />
+                  </AreaChart>
+                </ResponsiveContainer>
               </div>
             </PremiumCard>
 
-            <div className="reveal flex justify-end pb-2" style={{ animationDelay: "700ms" }}>
-              <EliteButton onClick={onOpenAnalysis}>Open advanced analysis</EliteButton>
-            </div>
+            <PremiumCard title="Energy routing" subtitle="Annual flow split" className="reveal" style={{ animationDelay: "400ms" }}>
+              <div className="grid gap-5 sm:grid-cols-[180px_minmax(0,1fr)] sm:items-center">
+                <div className="mx-auto h-[180px] w-[180px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie data={energyFlows} dataKey="value" nameKey="label" innerRadius={48} outerRadius={74} paddingAngle={2} strokeWidth={0}>
+                        {energyFlows.map((slice) => (
+                          <Cell key={slice.label} fill={slice.color} />
+                        ))}
+                      </Pie>
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+                <ul className="space-y-2">
+                  {energyFlows.map((slice) => (
+                    <li key={slice.label} className="flex items-center justify-between rounded-xl bg-[#F8FAFC] px-3 py-2.5 text-[13px]">
+                      <span className="flex items-center gap-2 text-[#64748B]">
+                        <span className="h-2 w-2 rounded-full" style={{ background: slice.color }} />
+                        {slice.label}
+                      </span>
+                      <span className="font-mono-num font-semibold text-[#0F172A]">{slice.value}%</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </PremiumCard>
           </div>
-        </main>
-      </div>
+
+          <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1fr)_380px]">
+            <PremiumCard title="20-year cash flow" subtitle="Cumulative view including upfront investment" className="reveal" style={{ animationDelay: "470ms" }}>
+              <div className="h-[280px] sm:h-[320px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={cashFlow}>
+                    <defs>
+                      <linearGradient id="cashFlowBarFill" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#8B5CF6" stopOpacity={0.9} />
+                        <stop offset="100%" stopColor="#2563EB" stopOpacity={0.68} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid vertical={false} stroke="rgba(148,163,184,0.18)" strokeDasharray="4 4" />
+                    <XAxis dataKey="year" tick={{ fontSize: 10, fill: "#94A3B8" }} axisLine={false} tickLine={false} />
+                    <YAxis tick={{ fontSize: 10, fill: "#94A3B8" }} axisLine={false} tickLine={false} width={48} />
+                    <Tooltip contentStyle={{ background: "rgba(255,255,255,0.96)", border: "1px solid rgba(148,163,184,0.18)", borderRadius: 14, fontSize: 12 }} formatter={(value: number) => [`EUR ${value.toLocaleString()}`, "Cumulative"]} />
+                    <Bar dataKey="cumulative" fill="url(#cashFlowBarFill)" radius={[6, 6, 0, 0]} barSize={28} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </PremiumCard>
+
+            <PremiumCard title="Validation output" subtitle={validationNotes.blocking} className="reveal" style={{ animationDelay: "540ms" }}>
+              <div className="space-y-4">
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#94A3B8]">Warnings</p>
+                  <ul className="mt-3 space-y-2">
+                    {validationNotes.warnings.map((item) => (
+                      <li key={item} className="rounded-xl bg-[#F8FAFC] px-3 py-3 text-[13px] leading-6 text-[#0F172A]">{item}</li>
+                    ))}
+                  </ul>
+                </div>
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#94A3B8]">Assumptions</p>
+                  <ul className="mt-3 space-y-2">
+                    {validationNotes.assumptions.map((item) => (
+                      <li key={item} className="rounded-xl bg-[#F8FAFC] px-3 py-3 text-[13px] leading-6 text-[#0F172A]">{item}</li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            </PremiumCard>
+          </div>
+
+          <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+            <PremiumCard title="Scenario comparison" subtitle="Why balanced wins here" className="reveal" style={{ animationDelay: "610ms" }}>
+              <div className="grid gap-3 lg:grid-cols-3">
+                {scenarioSummary.map((scenario) => (
+                  <div key={scenario.name} className="rounded-2xl border border-[rgba(148,163,184,0.18)] bg-[#F8FAFC] p-4">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#94A3B8]">{scenario.name}</p>
+                    <p className="font-mono-num mt-4 text-[22px] font-semibold tracking-[-0.03em] text-[#0F172A]">{scenario.metric}</p>
+                    <p className="mt-3 text-[13px] leading-6 text-[#64748B]">{scenario.tradeoff}</p>
+                  </div>
+                ))}
+              </div>
+            </PremiumCard>
+
+            <PremiumCard title="Next action" subtitle="Move into the detailed engineering workspace" className="reveal" style={{ animationDelay: "680ms" }}>
+              <div className="flex h-full flex-col justify-between gap-6">
+                <p className="max-w-[56ch] text-[15px] leading-8 text-[#64748B]">
+                  Continue into advanced analysis to inspect the hourly traces, tariff sensitivity and validation detail that support this recommendation.
+                </p>
+                <div className="flex justify-start">
+                  <EliteButton onClick={onOpenAnalysis}>Open advanced analysis</EliteButton>
+                </div>
+              </div>
+            </PremiumCard>
+          </div>
+        </div>
+      </main>
     </div>
   );
 }
 
-function ActionIconButton({ icon, label }: { icon: React.ReactNode; label: string }) {
+function StatusChip({ label }: { label: string }) {
+  return (
+    <span className="rounded-full border border-white/14 bg-white/8 px-3 py-1.5 text-[11px] uppercase tracking-[0.08em] text-white/74">
+      {label}
+    </span>
+  );
+}
+
+function GhostAction({ icon, label }: { icon: React.ReactNode; label: string }) {
   return (
     <button
       type="button"
-      title={label}
-      className="inline-flex items-center gap-1.5 rounded-lg border border-[rgba(148,163,184,0.18)] bg-white px-3 py-1.5 text-[12px] font-medium text-[#64748B] transition-colors hover:text-[#0F172A] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#059669]"
+      className="inline-flex items-center gap-1.5 rounded-xl border border-white/12 bg-white/6 px-3 py-2 text-[12px] text-white/78 transition-colors hover:text-white"
     >
       {icon}
       <span className="hidden sm:inline">{label}</span>
@@ -369,11 +348,12 @@ function ActionIconButton({ icon, label }: { icon: React.ReactNode; label: strin
   );
 }
 
-function LegendDot({ color, label }: { color: string; label: string }) {
+function SummaryMetric({ label, value, detail }: { label: string; value: string; detail: string }) {
   return (
-    <span className="flex items-center gap-1.5">
-      <span className="h-2 w-2 rounded-full" style={{ background: color }} />
-      {label}
-    </span>
+    <div className="rounded-2xl border border-[rgba(148,163,184,0.18)] bg-[#F8FAFC] px-4 py-4">
+      <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#94A3B8]">{label}</p>
+      <p className="font-mono-num mt-3 text-[20px] font-semibold text-[#0F172A]">{value}</p>
+      <p className="mt-2 text-[13px] leading-6 text-[#64748B]">{detail}</p>
+    </div>
   );
 }
