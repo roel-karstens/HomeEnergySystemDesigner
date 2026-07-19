@@ -40,7 +40,7 @@ export function HeroSection({ onStart }: HeroSectionProps) {
 
   return (
     <div className="bg-white text-[#0F172A]">
-      <section className="relative min-h-[100vh] overflow-hidden bg-[#0B0B0D] text-white">
+      <section className="relative min-h-[100vh] snap-start overflow-hidden bg-[#0B0B0D] text-white">
         <img
           src={heroImageSrc}
           alt="Aerial view of a modern home with solar panels and an electric vehicle"
@@ -103,7 +103,7 @@ export function HeroSection({ onStart }: HeroSectionProps) {
         </div>
       </section>
 
-      <section id="landing-story" className="bg-white px-5 py-20 sm:px-8 lg:px-12 lg:py-28">
+      <section id="landing-story" className="min-h-[100vh] snap-start bg-white px-5 py-20 sm:px-8 lg:px-12 lg:py-28">
         <div className="mx-auto grid w-full max-w-[1600px] gap-10 lg:grid-cols-[minmax(0,420px)_1fr] lg:gap-16">
           <div className="reveal" style={{ animationDelay: "0ms" }}>
             <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#94A3B8]">Why this matters</p>
@@ -122,7 +122,7 @@ export function HeroSection({ onStart }: HeroSectionProps) {
         </div>
       </section>
 
-      <section className="bg-[#F8FAFC] px-5 py-8 sm:px-8 lg:px-12 lg:py-10">
+      <section className="min-h-[100vh] snap-start bg-[#F8FAFC] px-5 py-8 sm:px-8 lg:px-12 lg:py-10">
         <div className="mx-auto grid w-full max-w-[1600px] gap-5 lg:grid-cols-[1.12fr_0.88fr] lg:items-stretch">
           <div className="reveal relative min-h-[520px] overflow-hidden rounded-[28px] bg-[#0B0B0D]" style={{ animationDelay: "0ms" }}>
             <img
@@ -173,7 +173,7 @@ export function HeroSection({ onStart }: HeroSectionProps) {
         </div>
       </section>
 
-      <section className="bg-[#0B0B0D] px-5 py-20 text-white sm:px-8 lg:px-12 lg:py-28">
+      <section className="min-h-[100vh] snap-start bg-[#0B0B0D] px-5 py-20 text-white sm:px-8 lg:px-12 lg:py-28">
         <div className="mx-auto grid w-full max-w-[1600px] gap-10 lg:grid-cols-[minmax(0,460px)_1fr] lg:gap-16">
           <div className="reveal" style={{ animationDelay: "0ms" }}>
             <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-white/55">Explainable advice</p>
@@ -195,7 +195,7 @@ export function HeroSection({ onStart }: HeroSectionProps) {
         </div>
       </section>
 
-      <section className="bg-white px-5 py-20 sm:px-8 lg:px-12 lg:py-28">
+      <section className="min-h-[100vh] snap-start bg-white px-5 py-20 sm:px-8 lg:px-12 lg:py-28">
         <div className="mx-auto w-full max-w-[1600px]">
           <div className="reveal max-w-[720px]" style={{ animationDelay: "0ms" }}>
             <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#94A3B8]">Scenario comparison</p>
@@ -223,7 +223,7 @@ export function HeroSection({ onStart }: HeroSectionProps) {
         </div>
       </section>
 
-      <section className="bg-[#F8FAFC] px-5 py-20 sm:px-8 lg:px-12 lg:py-28">
+      <section className="min-h-[100vh] snap-start bg-[#F8FAFC] px-5 py-20 sm:px-8 lg:px-12 lg:py-28">
         <div className="mx-auto w-full max-w-[1200px] overflow-hidden rounded-[32px] bg-[#0B0B0D] px-6 py-12 text-white sm:px-10 lg:px-16 lg:py-16">
           <div className="reveal mx-auto max-w-[720px] text-center" style={{ animationDelay: "0ms" }}>
             <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-white/56">Start with your home</p>
