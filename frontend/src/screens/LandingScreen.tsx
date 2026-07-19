@@ -6,8 +6,8 @@ interface LandingScreenProps {
 
 export function LandingScreen({ onNext }: LandingScreenProps) {
   return (
-    <div className="h-screen w-full overflow-y-auto bg-[#F8FAFC]">
-      <div className="mx-auto max-w-7xl">
+    <div className="min-h-screen w-full overflow-y-auto bg-white">
+      <div className="w-full">
         <HeroSection onStart={onNext} />
       </div>
     </div>
