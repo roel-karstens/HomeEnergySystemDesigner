@@ -61,22 +61,27 @@ export function App() {
           {screenOrder.map((id, idx) => (
             <div
               key={id}
-              className={`h-1 transition-all duration-300 ${
-                idx < currentIndex ? "w-6 bg-emerald-600" : idx === currentIndex ? "w-6 bg-emerald-400" : "w-1 bg-slate-300"
+              className={`h-1 rounded-full transition-all duration-300 ${
+                idx < currentIndex
+                  ? "w-6 bg-[#3F3F46]"
+                  : idx === currentIndex
+                    ? "w-6 bg-[#18181B]"
+                    : "w-1 bg-slate-300"
               }`}
             />
           ))}
         </div>
 
-        {/* Navigation buttons */}
+        {/* Navigation button */}
         {currentScreen !== "loading" && (
           <button
             onClick={handleNext}
             disabled={currentIndex >= screenOrder.length - 1}
-            className="rounded-full bg-emerald-600 p-2.5 hover:bg-emerald-700 transition disabled:opacity-50 disabled:cursor-not-allowed text-white shadow-lg"
             aria-label="Next screen"
+            className="group relative inline-flex items-center justify-center overflow-hidden rounded-full border border-white/[0.08] p-2.5 text-white shadow-[0_1px_2px_rgba(0,0,0,0.4)] transition-all duration-[200ms] [transition-timing-function:cubic-bezier(0.34,1.56,0.64,1)] hover:-translate-y-0.5 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40"
+            style={{ background: "linear-gradient(180deg, #3F3F46 0%, #18181B 100%)" }}
           >
-            <ChevronRight className="h-5 w-5" />
+            <ChevronRight className="h-5 w-5 text-[#10B981]" />
           </button>
         )}
       </div>
